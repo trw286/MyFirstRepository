@@ -1,0 +1,252 @@
+---
+geometry: left=0.8in,right=0.8in,top=0.8in,bottom=0.8in
+fontsize: 11pt
+title: "STA 445 S26 Assignment 7"
+author: "Tate Whittaker"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+Load your packages here:
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(ggrepel)
+```
+
+## Problem 1: 
+
+The `infmort` data set from the package `faraway` gives the infant mortality rate for a variety of countries. The information is relatively out of date, but will be fun to graph. Visualize the data using by creating scatter plots of mortality vs income while faceting using `region` and setting color by `oil` export status. Utilize a $\log_{10}$ transformation for both `mortality` and `income` axes. This can be done either by doing the transformation inside the `aes()` command or by utilizing the `scale_x_log10()` or `scale_y_log10()` layers. The critical difference is if the scales are on the original vs log transformed scale. Experiment with both and see which you prefer.
+
+```{r}
+library(faraway)
+data(infmort)
+head(infmort)
+```
+    
+```{r warning=FALSE}
+infmort_graph <- ggplot(infmort, aes(x = income, y = mortality)) +
+  facet_wrap(~region) +
+  geom_point(aes( color = oil )) +
+  labs(
+    title = "Infant Mortality vs Income by Region",
+    x = "Income (USD)",
+    y = "Mortality (per 1000 births)",
+    color = "Oil Exporter"
+  )
+infmort_graph
+```
+
+a.  The `rownames()` of the table gives the country names and you should create a new column that contains the country names. *`rownames`
+
+```{r}
+infmort$country <- rownames(infmort)
+head(infmort)
+```
+
+b. Create scatter plots with the `log10()` transformation inside the `aes()`command.
+
+```{r warning=FALSE}
+infmort_graph <- ggplot(infmort, aes(x = log10(income), y = log10(mortality))) +
+  facet_wrap(~region) +
+  geom_point(aes( color = oil )) +
+  labs(
+    title = "Infant Mortality vs Income by Region",
+    x = "Income (USD) scaled by log10",
+    y = "Mortality (per 1000 births) scaled by log10",
+    color = "Oil Exporter"
+  )
+infmort_graph
+```
+
+c. Create the scatter plots using the `scale_x_log10()` and `scale_y_log10()`.Set the major and minor breaks to be useful and aesthetically pleasing.Comment on which version you find easier to read.
+
+```{r warning=FALSE}
+infmort_graph <- ggplot(infmort, aes(x = income, y = mortality)) +
+  facet_wrap(~region) +
+  geom_point(aes(color = oil)) +
+  scale_x_log10(
+    breaks = c(100, 500, 1000, 5000, 10000),       
+    minor_breaks = c(200, 300, 400, 2000, 3000, 4000, 7000)
+  ) +
+  scale_y_log10(
+    breaks = c(10, 50, 100, 200, 500),
+    minor_breaks = c(20, 30, 40, 70, 150, 300, 400)
+  ) +
+  labs(
+    title = "Infant Mortality vs Income by Region",
+    x = "Income (USD) sacled by log10",
+    y = "Mortality (per 1000 births) scaled by log10",
+    color = "Oil Exporter"
+  )
+
+infmort_graph
+```
+
+The scale_x_log10 and scale_y_log10 is easier to read because the axes show the
+original values so no mental computation is needed and I can control
+the break distance.
+
+d.  The package `ggrepel` contains functions `geom_text_repel()` and `geom_label_repel()` that mimic the basic `geom_text()` and `geom_label()`functions in `ggplot2`, but work to make sure the labels don't overlap.  Select 10-15 countries to label and do so using the `geom_text_repel()` function.
+
+```{r warning=FALSE}
+countries_to_label <- c("Australia          ", "United_States      ", 
+                        "Canada             ", "Finland            ", 
+                        "France             ", "West_Germany       ", 
+                        "Ireland            ", "New_Zealand        ", 
+                        "Netherlands        ", "Norway             ", 
+                        "Britain            ")
+
+infmort_labels <- infmort %>%
+  filter(country %in% countries_to_label)
+
+infmort_graph <- ggplot(infmort, aes(x = income, y = mortality)) +
+  facet_wrap(~region) +
+  geom_point(aes(color = oil)) +
+  geom_text_repel(
+    data = infmort_labels,
+    aes(label = country) 
+  ) +
+  scale_x_log10(
+    breaks = c(100, 500, 1000, 5000, 10000),
+    minor_breaks = c(200, 300, 400, 2000, 3000, 4000, 7000)
+  ) +
+  scale_y_log10(
+    breaks = c(10, 50, 100, 200, 500),
+    minor_breaks = c(20, 30, 40, 70, 150, 300, 400)
+  ) +
+  labs(
+    title = "Infant Mortality vs Income by Region",
+    x = "Income (USD)",
+    y = "Mortality (per 1000 births)",
+    color = "Oil Exporter"
+  )
+
+infmort_graph
+```
+
+## Problem 2
+
+Using the `datasets::trees` data, complete the following:
+
+```{r}
+head(trees)
+```
+
+a. Create a regression model for $y=$ `Volume` as a function of $x=$ `Height`.
+
+```{r}
+tree_model <- lm( Volume ~ Height, trees)
+tree_model
+```
+    
+b. Using the str(your model's name) command, to get a list of all the information stored in the linear model object.  Use $ to extract the slope and intercept of the regression line (the coefficients).
+
+```{r}
+str(tree_model)
+intercept <- tree_model$coefficients[1]
+slope <- tree_model$coefficients[2]
+
+intercept
+slope
+```
+
+c. Using `ggplot2`, create a scatter plot of Volume vs Height. 
+
+```{r}
+tree_plot <- ggplot(trees, aes(x = Height, y = Volume)) +
+  geom_point( aes(size=Girth) ) +
+  labs( title="Height vs. Volume of Timber in Felled Black Cherry Trees") +
+  labs( x="Height of Timber", y="Volume of Timber")
+tree_plot
+```
+
+d. Create a nice white filled rectangle to add text information to using by adding the following annotation layer.
+
+annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74, fill='white', color='black')
+
+```{r}
+tree_plot <- tree_plot +
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74, fill='white', color='black')
+tree_plot
+```
+
+e. Add some annotation text to write the equation of the line
+        $\hat{y}_i = -87.12 + 1.54x_i$ in the text area.
+        
+```{r}
+tree_plot <- tree_plot + 
+  annotate('text', x = 70, y = 70,
+           label = expression(hat(y)[i] == -87.12 + 1.54*x[i]),
+           size = 3)
+tree_plot
+```
+
+f.   Add annotation to add $R^2 = 0.358$
+
+```{r}
+tree_plot <- tree_plot +
+  annotate('text', x = 70, y = 64,
+           label = expression(R^2 == 0.358),
+           size = 3)
+tree_plot
+```
+
+g. Add the regression line in red. The most convenient layer function to use is `geom_abline()`.
+
+```{r}
+tree_plot <- tree_plot + 
+  geom_abline(intercept = intercept, slope = slope, color = 'red')
+tree_plot
+```
+
+## Problem 3
+
+In `datasets::Titanic` table summarizes the survival of passengers aboard the ocean liner *Titanic*. It includes information about passenger class, sex, and age (adult or child). Create a bar graph showing the number of individuals that survived based on the passenger `Class`, `Sex`, and `Age` variable information. You'll need to use faceting and/or color to get all four variables on the same graph. Make sure that differences in survival among different classes of children are perceivable.  *Unfortunately, the data is stored as a `table`and to expand it to a data frame, the following code can be used.*
+    
+```{r}
+Titanic <- Titanic %>% as.data.frame()
+head(Titanic)
+```
+
+a. Make this graph using the default theme. *If you use color to denote survivorship, modify the color scheme so that a cold color denotes death.*
+
+```{r}
+Titanic_bar_graph <- ggplot(Titanic, aes(x = Class, y = Freq, fill = Survived)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  facet_grid(Age ~ Sex) +
+  scale_fill_manual(values = c('No' = 'red', 'Yes' = 'green')) +
+  labs(
+    title = "Titanic Survival by Class, Sex, and Age",
+    x = "Passenger Class",
+    y = "Number of Passengers",
+    fill = "Survived")
+
+Titanic_bar_graph
+```
+
+b. Make this graph using the `theme_bw()` theme.
+
+```{r}
+Titanic_bar_graph <- Titanic_bar_graph +
+  theme_bw()
+Titanic_bar_graph
+```
+
+c. Make this graph using the `cowplot::theme_minimal_hgrid()` theme.
+
+```{r}
+Titanic_bar_graph <- Titanic_bar_graph +
+  cowplot::theme_minimal_hgrid()
+Titanic_bar_graph
+```
+
+d. Why would it be beneficial to drop the vertical grid lines?
+
+Because bar graphs are read vertically, so the lines going vertical
+don't really add anything except visual clutter. Unlike the horizontal lines, 
+which your eyes can follow when trying to gauge the number that the frequency 
+is at.
+    
+
+
+

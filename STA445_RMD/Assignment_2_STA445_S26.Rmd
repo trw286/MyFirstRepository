@@ -1,0 +1,115 @@
+---
+geometry: left=0.8in,right=0.8in,top=0.8in,bottom=0.8in
+fontsize: 11pt
+title: "STA 445 S26 Assignment 2"
+author: "Tate Whittaker"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+Load all the packages you will need here.  Notice that the code chunk option has been set to include = FALSE.  This means the code will run, but the output will not be shown in the knitted document.  Thus, you do not need to worry about suppressing warning messages.  This code will be helpful when wraiting a project report.
+
+```{r include=FALSE}
+library(Lock5Data)
+library(tidyverse)
+library(readxl)
+```
+
+# Problem 1
+
+Download from GitHub the data file by clicking on this link:  [Example_5.xls](https://github.com/BuscagliaR/STA_444_v2/raw/refs/heads/main/data-raw/Example_5.xls). Open it in Excel and figure out which sheet of data we should import into R. At the same time figure out which range of values to import.
+
+a. Import the dataset into a data frame and show the structure of the imported data using the `str()` command. Make sure that your data has $n=31$ observations and the three columns are appropriately named. You are not allowed to make any modifications to the data file.  All changes must be made within this rmd file.
+
+```{r}
+example_5 <- read_xls("./data-raw/Example_5.xls", sheet = "RawData", 
+                       range = ("A5:C36"))
+str(example_5)
+```
+
+b. Use `slice_sample()` to show five random rows of the dataset.
+
+```{r}
+slice_sample(example_5, n=5)
+```
+
+I wanted to save the data to my clean data file, hope that's okay.
+```{r}
+saveRDS(example_5, file = "./data/example_5.rds")
+```
+
+# Problem 2
+
+Download from GitHub the data file by clicking on this link: [Example_3.xls](https://github.com/BuscagliaR/STA_444_v2/raw/refs/heads/main/data-raw/Example_3.xls). 
+
+a. Import the data set into a data frame and show the structure of the imported data using the `str()` command. Make sure the Tesla values are `NA` where appropriate and that both `-9999` and `NA` are imported as NA values. You are not allowed to make any modifications to the data file.  All changes must be made within this rmd file.
+
+```{r}
+example_3 <- read_xls("./data-raw/Example_3.xls", sheet = "data", 
+                      range = ("A1:L34"), na = c("-9999", "NA"))
+str(example_3)
+```
+
+b. Use the `tail()` command to show the last five rows of a data table. 
+
+```{r}
+tail(example_3, n = 5)
+```
+
+c. Use `slice_sample()` to show five random rows of the dataset.
+
+```{r}
+slice_sample(example_3, n = 5)
+```
+
+```{r}
+saveRDS(example_3, file = "./data/example_3.rds")
+```
+
+# Problem 3
+
+Download all of the files from GitHub `data-raw/InsectSurveys` directory which have been linked [here.](https://github.com/BuscagliaR/STA_444_v2/tree/main/data-raw/InsectSurveys) Each month's file contains a sheet with information about each of the sites that was surveyed. The second sheet contains information about the number of each species that was observed at each site. 
+
+a. Import the data for each month and create a single `site` data frame with information from each month. You are not allowed to make any modifications to the data file.  All changes must be made within this rmd file. You may need to change column names and reorganize columns.
+
+```{r}
+may <- read_xlsx("./data-raw/May.xlsx", sheet = "Sites", range = ("A1:F10"))
+june <- read_xlsx("./data-raw/June.xlsx", sheet = "Sites", range = ("A1:F10"))
+july <- read_xlsx("./data-raw/July.xlsx", sheet = "Sites", range = ("A1:F10"))
+august <- read_xlsx("./data-raw/August.xlsx", sheet = "sites", range = ("A1:F10"))
+september <- read_xlsx("./data-raw/September.xlsx", sheet = "sites", range = ("A1:F10"))
+october <- read_xlsx("./data-raw/October.xlsx", sheet = "Sites", range = ("A1:F10"), 
+                     na = "Did not vist")
+
+month_list <- list(may, june, july, august, september, october)
+
+for( index in seq_along( month_list ) ) {
+  month_list[[ index ]] <- month_list[[ index ]] %>%
+    rename("Site Name" = any_of(c( "Site name", "Site Name" )),
+           "Pond Area" = any_of(c( "Pond area", "Pond Area" )),
+           "Water Depth" = any_of(c( "Water depth", "Water Depth" ))) %>%
+    select(`Site Name`, `Pond Area`, `Water Depth`, ph, Date, Observer)
+}
+
+site <- bind_rows(month_list)
+
+saveRDS(site, "./data/site.rds")
+```
+
+b. Show the structure of the data frame using the `str()` command.
+
+```{r}
+str(site)
+```
+
+c. Use `slice_sample()` to show eight random rows of the dataset.
+
+```{r}
+slice_sample(site, n = 8)
+```
+
+d. Comment on the importance of consistency of your data input sheets.
+
+Consistency is import with data input sheets, because if column name or types
+aren't all uniform then you have to perform extensive data cleaning on the input
+sheets.
